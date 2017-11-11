@@ -2,20 +2,27 @@ import logging
 import os
 import codecs
 import glob
+import re
 import multiprocessing
 import warnings
 from nltk.corpus import gutenberg, state_union, abc, conll2000, conll2002, conll2007
-from nltk.tokenize import sent_tokenize
+#from nltk.tokenize import sent_tokenize
+import nltk
 from string import punctuation
 from nltk.corpus import brown, movie_reviews, treebank, reuters, webtext,subjectivity
 from nltk.corpus import framenet as fn, genesis, rte, twitter_samples, names, inaugural
 warnings.filterwarnings(action='ignore', category=UserWarning, module='gensim')
 from gensim.models import word2vec
 
+def sentence_to_wordlist(raw):
+    clean = re.sub("[^a-zA-Z]"," ", raw)
+    words = clean.split()
+    return words
 
 
 
-book_filenames = sorted(glob.glob("books/*.txt"))
+
+book_filenames = sorted(glob.glob("books/*.*"))
 print("books file names", book_filenames)
 books_raw = u""
 for book_filename in book_filenames:
@@ -24,12 +31,25 @@ for book_filename in book_filenames:
         books_raw += book_file.read()
     print("Corpus is now {0} characters long".format(len(books_raw)))
     print()
+    books_raw = books_raw.lower()
 
-books_corp_sents = sent_tokenize(books_raw)
-print("books to sents")
+
+
+
+tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+raw_sentences = tokenizer.tokenize(books_raw)
+
+book_sentences = []
+for raw_sentence in raw_sentences:
+    if len(raw_sentence) > 0:
+        book_sentences.append(sentence_to_wordlist(raw_sentence))
+
+#print(raw_sentences[5])
+#print(book_sentences[5])
+
+
 conll2000_corp_sents = conll2000.sents()
 print("condll2000 to sents")
-
 conll2002_corp_sents = conll2002.sents()
 print("conll2002 to sents")
 
@@ -59,15 +79,10 @@ reuters_corp_sents = reuters.sents()
 print("Reuters to sents")
 webtext_corp_sents = webtext.sents()
 print("Webtext to sents")
+
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 print("Cleaning data ...")
-
-
-discard_punctuation_and_lowercased_sents_books =  [[word.lower() for word in sent if word not in punctuation] for sent in
-                                                        books_corp_sents]
-
-
 
 
 discard_punctuation_and_lowercased_sents_condll2007 =  [[word.lower() for word in sent if word not in punctuation] for sent in
@@ -138,7 +153,7 @@ discard_punctuation_and_lowercased_sents_inaugural =  [[word.lower() for word in
 
 
 
-compine_sents = \
+compine_sents = book_sentences +\
     discard_punctuation_and_lowercased_sents_brown + \
     discard_punctuation_and_lowercased_sents_reviews + \
     discard_punctuation_and_lowercased_sents_treebank + \
@@ -153,8 +168,9 @@ compine_sents = \
     discard_punctuation_and_lowercased_sents_inaugural + \
     discard_punctuation_and_lowercased_sents_condll2000 + \
     discard_punctuation_and_lowercased_sents_condll2002 + \
-    discard_punctuation_and_lowercased_sents_condll2007 + \
-    discard_punctuation_and_lowercased_sents_books
+    discard_punctuation_and_lowercased_sents_condll2007
+
+
 
 #
 # num_features = 300
@@ -180,7 +196,7 @@ compine_sents = \
 
 nltk_corpus_word2vec_model = word2vec.Word2Vec(compine_sents, min_count=5, size=200, workers=4)
 
-print(len(compine_sents))
+#print(compine_sents)
 
 if not os.path.exists("trained_model"):
     os.makedirs("trained_model")
@@ -191,6 +207,6 @@ nltk_corpus_word2vec_model.save(os.path.join("trained_model", "corpus2vec.w2v"))
 
 
 
-print(nltk_corpus_word2vec_model.most_similar(["girl"], topn=20))
+print(nltk_corpus_word2vec_model.most_similar(["lord"], topn=20))
 #print(brown.fileids())
 
