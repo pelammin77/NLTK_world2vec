@@ -1,4 +1,5 @@
 import logging
+import os
 import multiprocessing
 import warnings
 from nltk.corpus import gutenberg, state_union, abc, conll2000, conll2002, conll2007
@@ -77,33 +78,39 @@ compine_sents = \
     discard_punctuation_and_lowercased_sents_state + \
     discard_punctuation_and_lowercased_sents_fn
 
+#
+# num_features = 300
+# # Minimum word count threshold.
+# min_word_count = 1
+#
+# # Number of threads to run in parallel.
+# #more workers, faster we train
+# num_workers =  multiprocessing.cpu_count()
+#
+# # Context window length.
+# context_size = 7
+#
+# # Downsample setting for frequent words.
+# #0 - 1e-5 is good for this
+# downsampling = 1e-3
+#
+# # Seed for the RNG, to make the results reproducible.
+# #random number generator
+# #deterministic, good for debugging
+# seed = 1
 
-num_features = 300
-# Minimum word count threshold.
-min_word_count = 1
 
-# Number of threads to run in parallel.
-#more workers, faster we train
-num_workers =  multiprocessing.cpu_count()
-
-# Context window length.
-context_size = 7
-
-# Downsample setting for frequent words.
-#0 - 1e-5 is good for this
-downsampling = 1e-3
-
-# Seed for the RNG, to make the results reproducible.
-#random number generator
-#deterministic, good for debugging
-
-
-
+nltk_corpus_word2vec_model = word2vec.Word2Vec(compine_sents, min_count=5, size=200)
 
 print(len(compine_sents))
+if not os.path.exists("trained_model"):
+    os.makedirs("trained_model")
 
-bible_kjv_word2vec_model = word2vec.Word2Vec(compine_sents, min_count=5, size=200)
-#print(bible_kjv_word2vec_model.most_similar(["god"]))
-print(bible_kjv_word2vec_model.most_similar(["girl"], topn=20))
+
+nltk_corpus_word2vec_model.save(os.path.join("trained_model", "corpus2vec.w2v"))
+
+
+
+#print(nltk_corpus_word2vec_model.most_similar(["girl"], topn=20))
 #print(brown.fileids())
 
